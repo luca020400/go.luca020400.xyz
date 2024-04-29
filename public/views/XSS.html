@@ -1,0 +1,11 @@
+{{ define "XSS" }}
+
+{{ template "header" . }}
+
+<h1 class="text-4xl font-bold">XSS</h1>
+
+<p class="text-red-500">{{.Data}}</p>
+
+{{ template "footer" . }}
+
+{{ end }}

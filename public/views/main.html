@@ -1,0 +1,22 @@
+{{ define "main" }}
+
+{{ template "header" . }}
+
+<div class="flex justify-center items-center h-screen">
+    <div class="max-w-2xl mx-auto bg-white border border-gray-300 rounded-md p-4">
+        <form hx-post="/api/todos" hx-swap="beforeend" hx-target="#todos_list" class="mt-4">
+            <input type="text" name="name" placeholder="Add a new todo" required
+                class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <button type="submit"
+                class="px-4 py-2 ml-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">Add</button>
+        </form>
+
+        <ul id="todos_list" hx-get="/api/todos" hx-swap="innerHTML" hx-trigger="load" class="mt-4">
+            <li class="text-gray-500">No todos found.</li>
+        </ul>
+    </div>
+</div>
+
+{{ template "footer" . }}
+
+{{ end }}

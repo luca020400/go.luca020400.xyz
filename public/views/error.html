@@ -1,0 +1,11 @@
+{{ template "header" . }}
+
+{{ define "error"}}
+
+<h1 class="text-4xl font-bold">Error</h1>
+
+<p class="text-red-500">{{.Data}}</p>
+
+{{ template "footer" . }}
+
+{{ end }}
