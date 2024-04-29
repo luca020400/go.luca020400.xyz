@@ -23,11 +23,11 @@ func (tdb *TodoDB) Setup() error {
 	return setupDatabase(tdb.db)
 }
 
-func (tdb *TodoDB) GetTodos() ([]Todo, error) {
+func (tdb *TodoDB) GetTodos() ([]*Todo, error) {
 	return getTodos(tdb.db)
 }
 
-func (tdb *TodoDB) GetTodoByID(id int) (*Todo, error) {
+func (tdb *TodoDB) GetTodoByID(id int64) (*Todo, error) {
 	return getTodoByID(tdb.db, id)
 }
 
@@ -73,7 +73,7 @@ func createTodoTable(db *sql.DB) error {
 	return nil
 }
 
-func getTodos(db *sql.DB) ([]Todo, error) {
+func getTodos(db *sql.DB) ([]*Todo, error) {
 	query, err := db.Prepare("SELECT id, name, completed FROM todos")
 	if err != nil {
 		return nil, err
@@ -86,9 +86,9 @@ func getTodos(db *sql.DB) ([]Todo, error) {
 	}
 	defer rows.Close()
 
-	todos := []Todo{}
+	todos := []*Todo{}
 	for rows.Next() {
-		var todo Todo
+		todo := &Todo{}
 		err := rows.Scan(&todo.ID, &todo.Name, &todo.Completed)
 		if err != nil {
 			return nil, err
@@ -100,7 +100,7 @@ func getTodos(db *sql.DB) ([]Todo, error) {
 	return todos, nil
 }
 
-func getTodoByID(db *sql.DB, id int) (*Todo, error) {
+func getTodoByID(db *sql.DB, id int64) (*Todo, error) {
 	query, err := db.Prepare("SELECT id, name, completed FROM todos WHERE id = ?")
 	if err != nil {
 		return nil, err

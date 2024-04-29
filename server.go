@@ -98,7 +98,7 @@ func CompletedTodo(c echo.Context) error {
 		return renderError(c, err)
 	}
 
-	todo, err := tododb.GetTodoByID(int(idInt))
+	todo, err := tododb.GetTodoByID(idInt)
 	if err != nil {
 		return renderError(c, err)
 	}
