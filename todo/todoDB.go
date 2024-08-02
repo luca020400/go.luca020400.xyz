@@ -93,6 +93,7 @@ func (tdb *TodoDB) GetTodos() ([]Todo, error) {
 
 func (tdb *TodoDB) GetTodoByID(id int64) (*Todo, error) {
 	row := tdb.getTodoByIDStmt.QueryRow(id)
+
 	var todo Todo
 	if err := row.Scan(&todo.ID, &todo.Name, &todo.Completed); err != nil {
 		return nil, err
@@ -102,17 +103,21 @@ func (tdb *TodoDB) GetTodoByID(id int64) (*Todo, error) {
 }
 
 func (tdb *TodoDB) InsertTodo(name string) (*Todo, error) {
-	todo := &Todo{Name: name}
-	res, err := tdb.insertTodoStmt.Exec(todo.Name, todo.Completed)
+	res, err := tdb.insertTodoStmt.Exec(name, false)
 	if err != nil {
 		return nil, err
 	}
 
-	if id, err := res.LastInsertId(); err == nil {
-		todo.ID = id
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
 	}
 
-	return todo, nil
+	return &Todo{
+		ID:        id,
+		Name:      name,
+		Completed: false,
+	}, nil
 }
 
 func (tdb *TodoDB) UpdateTodo(todo *Todo) (int64, error) {
