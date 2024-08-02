@@ -20,52 +20,7 @@ func NewTodoDB() (*TodoDB, error) {
 }
 
 func (tdb *TodoDB) Setup() error {
-	return setupDatabase(tdb.db)
-}
-
-func (tdb *TodoDB) GetTodos() ([]*Todo, error) {
-	return getTodos(tdb.db)
-}
-
-func (tdb *TodoDB) GetTodoByID(id int64) (*Todo, error) {
-	return getTodoByID(tdb.db, id)
-}
-
-func (tdb *TodoDB) InsertTodo(todo *Todo) (int64, error) {
-	return insertTodo(tdb.db, todo)
-}
-
-func (tdb *TodoDB) UpdateTodo(todo *Todo) (int64, error) {
-	return updateTodo(tdb.db, todo)
-}
-
-func (tdb *TodoDB) DeleteTodoByID(id int64) (int64, error) {
-	return deleteTodoByID(tdb.db, id)
-}
-
-func (tdb *TodoDB) Close() error {
-	return tdb.db.Close()
-}
-
-func connect() (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", "data.db")
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
-func createTodoTable(db *sql.DB) error {
-	query := `
-		CREATE TABLE IF NOT EXISTS todos (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT,
-			completed BOOLEAN
-		)
-	`
-
-	_, err := db.Exec(query)
+	err := createTodoTable(tdb.db)
 	if err != nil {
 		return err
 	}
@@ -73,8 +28,8 @@ func createTodoTable(db *sql.DB) error {
 	return nil
 }
 
-func getTodos(db *sql.DB) ([]*Todo, error) {
-	query, err := db.Prepare("SELECT id, name, completed FROM todos")
+func (tdb *TodoDB) GetTodos() ([]*Todo, error) {
+	query, err := tdb.db.Prepare("SELECT id, name, completed FROM todos")
 	if err != nil {
 		return nil, err
 	}
@@ -100,8 +55,8 @@ func getTodos(db *sql.DB) ([]*Todo, error) {
 	return todos, nil
 }
 
-func getTodoByID(db *sql.DB, id int64) (*Todo, error) {
-	query, err := db.Prepare("SELECT id, name, completed FROM todos WHERE id = ?")
+func (tdb *TodoDB) GetTodoByID(id int64) (*Todo, error) {
+	query, err := tdb.db.Prepare("SELECT id, name, completed FROM todos WHERE id = ?")
 	if err != nil {
 		return nil, err
 	}
@@ -117,8 +72,8 @@ func getTodoByID(db *sql.DB, id int64) (*Todo, error) {
 	return &todo, nil
 }
 
-func insertTodo(db *sql.DB, todo *Todo) (int64, error) {
-	query, err := db.Prepare("INSERT INTO todos (name, completed) VALUES (?, ?)")
+func (tdb *TodoDB) InsertTodo(todo *Todo) (int64, error) {
+	query, err := tdb.db.Prepare("INSERT INTO todos (name, completed) VALUES (?, ?)")
 	if err != nil {
 		return 0, err
 	}
@@ -132,8 +87,8 @@ func insertTodo(db *sql.DB, todo *Todo) (int64, error) {
 	return res.LastInsertId()
 }
 
-func updateTodo(db *sql.DB, todo *Todo) (int64, error) {
-	query, err := db.Prepare("UPDATE todos SET name = ?, completed = ? WHERE id = ?")
+func (tdb *TodoDB) UpdateTodo(todo *Todo) (int64, error) {
+	query, err := tdb.db.Prepare("UPDATE todos SET name = ?, completed = ? WHERE id = ?")
 	if err != nil {
 		return 0, err
 	}
@@ -147,8 +102,8 @@ func updateTodo(db *sql.DB, todo *Todo) (int64, error) {
 	return res.RowsAffected()
 }
 
-func deleteTodoByID(db *sql.DB, id int64) (int64, error) {
-	query, err := db.Prepare("DELETE FROM todos WHERE id = ?")
+func (tdb *TodoDB) DeleteTodoByID(id int64) (int64, error) {
+	query, err := tdb.db.Prepare("DELETE FROM todos WHERE id = ?")
 	if err != nil {
 		return 0, err
 	}
@@ -162,11 +117,28 @@ func deleteTodoByID(db *sql.DB, id int64) (int64, error) {
 	return res.RowsAffected()
 }
 
-func setupDatabase(db *sql.DB) error {
-	err := createTodoTable(db)
+func (tdb *TodoDB) Close() error {
+	return tdb.db.Close()
+}
+
+func connect() (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", "data.db")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return db, nil
+}
+
+func createTodoTable(db *sql.DB) error {
+	query := `
+		CREATE TABLE IF NOT EXISTS todos (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT,
+			completed BOOLEAN
+		)
+	`
+
+	_, err := db.Exec(query)
+	return err
 }
