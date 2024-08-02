@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/michaeljs1990/sqlitestore"
 )
 
 type Template struct {
@@ -141,9 +142,16 @@ func CompletedTodo(c echo.Context) error {
 }
 
 var tododb *TodoDB
+var store *sqlitestore.SqliteStore
 
 func main() {
 	var err error
+
+	// Setup session store
+	if store, err = sqlitestore.NewSqliteStore("sessions.db", "sessions", "/", 3600, []byte("secret")); err != nil {
+		panic(err)
+	}
+	defer store.Close()
 
 	// Setup DB
 	if tododb, err = NewTodoDB(); err != nil {
