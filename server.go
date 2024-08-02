@@ -50,22 +50,36 @@ func Todos(c echo.Context) error {
 }
 
 func GetTodos(c echo.Context) error {
+	var err error
+	defer func() {
+		if err != nil {
+			renderError(c, err)
+		}
+	}()
+
 	todos, err := tododb.GetTodos()
 	if err != nil {
-		return renderError(c, err)
+		return err
 	}
 
 	return c.Render(http.StatusOK, "todos", todos)
 }
 
 func CreateTodo(c echo.Context) error {
+	var err error
+	defer func() {
+		if err != nil {
+			renderError(c, err)
+		}
+	}()
+
 	name := c.FormValue("name")
 	todo := &Todo{
 		Name: name,
 	}
 	id, err := tododb.InsertTodo(todo)
 	if err != nil {
-		return renderError(c, err)
+		return err
 	}
 
 	todo.ID = id
@@ -73,15 +87,22 @@ func CreateTodo(c echo.Context) error {
 }
 
 func DeleteTodo(c echo.Context) error {
+	var err error
+	defer func() {
+		if err != nil {
+			renderError(c, err)
+		}
+	}()
+
 	id := c.Param("id")
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return renderError(c, err)
+		return err
 	}
 
 	rows, err := tododb.DeleteTodoByID(idInt)
 	if err != nil {
-		return renderError(c, err)
+		return err
 	}
 
 	if rows == 0 {
@@ -92,21 +113,27 @@ func DeleteTodo(c echo.Context) error {
 }
 
 func CompletedTodo(c echo.Context) error {
+	var err error
+	defer func() {
+		if err != nil {
+			renderError(c, err)
+		}
+	}()
+
 	id := c.Param("id")
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return renderError(c, err)
+		return err
 	}
 
 	todo, err := tododb.GetTodoByID(idInt)
 	if err != nil {
-		return renderError(c, err)
+		return err
 	}
 
 	todo.Completed = !todo.Completed
-	_, err = tododb.UpdateTodo(todo)
-	if err != nil {
-		return renderError(c, err)
+	if _, err = tododb.UpdateTodo(todo); err != nil {
+		return err
 	}
 
 	return c.Render(http.StatusOK, "todo", todo)
@@ -117,8 +144,7 @@ var tododb *TodoDB
 func main() {
 	// Setup DB
 	var err error
-	tododb, err = NewTodoDB()
-	if err != nil {
+	if tododb, err = NewTodoDB(); err != nil {
 		panic(err)
 	}
 	defer tododb.Close()
