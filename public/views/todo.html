@@ -16,7 +16,7 @@
     </span>
     {{ end }}
 
-    <button hx-post="/api/todos/{{ .ID }}/completed" hx-target="#todo_{{ .ID }}" hx-swap="outerHTML"
+    <button hx-put="/api/todos/{{ .ID }}/completed" hx-target="#todo_{{ .ID }}" hx-swap="outerHTML"
         class="ml-2 px-4 py-2 bg-blue-500 text-white rounded-md">Toggle completed</button>
 
 </li>
