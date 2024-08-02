@@ -1,11 +1,24 @@
 {{ define "error"}}
 
-{{ template "header" . }}
+<!DOCTYPE html>
+<html lang="en">
 
-<h1 class="text-4xl font-bold">Error</h1>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <script src="https://unpkg.com/htmx.org@latest/dist/htmx.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-<p class="text-red-500">{{ .Data }}</p>
+<body>
 
-{{ template "footer" . }}
+    <h1 class="text-4xl font-bold">Error</h1>
+
+    <p class="text-red-500">{{ .Data }}</p>
+
+</body>
+
+</html>
 
 {{ end }}
