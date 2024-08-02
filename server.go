@@ -106,7 +106,7 @@ func DeleteTodo(c echo.Context) error {
 	}
 
 	if rows == 0 {
-		return renderError(c, errors.New("Todo not found"))
+		return renderError(c, errors.New("todo not found"))
 	}
 
 	return c.NoContent(http.StatusOK)
