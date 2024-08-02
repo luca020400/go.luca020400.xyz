@@ -7,14 +7,20 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/michaeljs1990/sqlitestore"
 )
 
 type server struct {
 	tododb *TodoDB
+	store  *sqlitestore.SqliteStore
 }
 
-func RegisterHandlers(e *echo.Echo, tododb *TodoDB) {
-	s := &server{tododb: tododb}
+func RegisterHandlers(e *echo.Echo, tododb *TodoDB, store *sqlitestore.SqliteStore) {
+	s := &server{
+		tododb: tododb,
+		store:  store,
+	}
+
 	e.GET("/", s.Todos)
 
 	api := e.Group("/api")

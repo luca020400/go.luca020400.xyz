@@ -58,7 +58,8 @@ func main() {
 	e.Renderer = t
 
 	// Routes
-	todo.RegisterHandlers(e, tododb)
+	todo.RegisterHandlers(e, tododb, store)
+	user.RegisterHandlers(e, usersdb, store)
 
 	e.Static("/static", "public/assets")
 	e.Logger.Fatal(e.Start(":1323"))

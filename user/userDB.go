@@ -9,9 +9,8 @@ import (
 type UserDB struct {
 	db                 *sql.DB
 	getUsersStmt       *sql.Stmt
-	getUserByIDStmt    *sql.Stmt
+	getUserByNickStmt  *sql.Stmt
 	insertUserStmt     *sql.Stmt
-	updateUserStmt     *sql.Stmt
 	deleteUserByIDStmt *sql.Stmt
 }
 
@@ -30,17 +29,12 @@ func NewUserDB() (*UserDB, error) {
 		return nil, err
 	}
 
-	getUserByIDStmt, err := db.Prepare("SELECT id, nick FROM users WHERE id = ?")
+	getUserByNickStmt, err := db.Prepare("SELECT id, nick, hash FROM users WHERE nick = ?")
 	if err != nil {
 		return nil, err
 	}
 
-	insertUserStmt, err := db.Prepare("INSERT INTO users (nick, salt, pass) VALUES (?, ?, ?)")
-	if err != nil {
-		return nil, err
-	}
-
-	updateUserStmt, err := db.Prepare("UPDATE users SET nick = ? WHERE id = ?")
+	insertUserStmt, err := db.Prepare("INSERT INTO users (nick, hash) VALUES (?, ?)")
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +47,8 @@ func NewUserDB() (*UserDB, error) {
 	return &UserDB{
 		db:                 db,
 		getUsersStmt:       getUsersStmt,
-		getUserByIDStmt:    getUserByIDStmt,
+		getUserByNickStmt:  getUserByNickStmt,
 		insertUserStmt:     insertUserStmt,
-		updateUserStmt:     updateUserStmt,
 		deleteUserByIDStmt: deleteUserByIDStmt,
 	}, nil
 }
@@ -65,15 +58,22 @@ func connect() (*sql.DB, error) {
 }
 
 func createUserTable(db *sql.DB) error {
-	_, err := db.Exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, nick TEXT, salt TEXT, pass TEXT)")
+	query := `
+		CREATE TABLE IF NOT EXISTS users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			nick TEXT UNIQUE,
+			hash TEXT
+		)
+	`
+
+	_, err := db.Exec(query)
 	return err
 }
 
 func (udb *UserDB) Close() {
 	udb.getUsersStmt.Close()
-	udb.getUserByIDStmt.Close()
+	udb.getUserByNickStmt.Close()
 	udb.insertUserStmt.Close()
-	udb.updateUserStmt.Close()
 	udb.deleteUserByIDStmt.Close()
 }
 
@@ -96,19 +96,20 @@ func (udb *UserDB) GetUsers() ([]User, error) {
 	return users, nil
 }
 
-func (udb *UserDB) GetUserByID(id int64) (*User, error) {
-	row := udb.getUserByIDStmt.QueryRow(id)
+func (udb *UserDB) GetUserByNick(nick string) (*User, string, error) {
+	row := udb.getUserByNickStmt.QueryRow(nick)
 
 	var user User
-	if err := row.Scan(&user.ID, &user.Nick); err != nil {
-		return nil, err
+	var hash string
+	if err := row.Scan(&user.ID, &user.Nick, &hash); err != nil {
+		return nil, "", err
 	}
 
-	return &user, nil
+	return &user, hash, nil
 }
 
-func (udb *UserDB) InsertUser(nick, salt, pass string) (*User, error) {
-	res, err := udb.insertUserStmt.Exec(nick, salt, pass)
+func (udb *UserDB) InsertUser(nick, hash string) (*User, error) {
+	res, err := udb.insertUserStmt.Exec(nick, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -122,15 +123,6 @@ func (udb *UserDB) InsertUser(nick, salt, pass string) (*User, error) {
 		ID:   id,
 		Nick: nick,
 	}, nil
-}
-
-func (udb *UserDB) UpdateUser(user *User) (int64, error) {
-	res, err := udb.updateUserStmt.Exec(user.Nick, user.ID)
-	if err != nil {
-		return 0, err
-	}
-
-	return res.RowsAffected()
 }
 
 func (udb *UserDB) DeleteUserByID(id int64) (int64, error) {
