@@ -143,13 +143,13 @@ func CompletedTodo(c echo.Context) error {
 var tododb *TodoDB
 
 func main() {
-	// Setup DB
 	var err error
+
+	// Setup DB
 	if tododb, err = NewTodoDB(); err != nil {
 		panic(err)
 	}
 	defer tododb.Close()
-	tododb.Setup()
 
 	// Echo instance
 	e := echo.New()
