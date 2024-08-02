@@ -112,10 +112,6 @@ func CompletedTodo(c echo.Context) error {
 	return c.Render(http.StatusOK, "todo", todo)
 }
 
-func XSS(c echo.Context) error {
-	return renderData(c, "XSS", "XSS", "<script>alert('XSS')</script>")
-}
-
 var tododb *TodoDB
 
 func main() {
@@ -147,8 +143,6 @@ func main() {
 	e.POST("/api/todos", CreateTodo)
 	e.DELETE("/api/todos/:id", DeleteTodo)
 	e.POST("/api/todos/:id/completed", CompletedTodo)
-
-	e.GET("/xss", XSS)
 
 	e.Static("/static", "public/assets")
 	e.Logger.Fatal(e.Start(":1323"))
