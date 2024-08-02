@@ -1,7 +1,6 @@
 package user
 
 import (
-	"encoding/gob"
 	"server/util"
 
 	"github.com/labstack/echo/v4"
@@ -14,8 +13,6 @@ type server struct {
 }
 
 func RegisterHandlers(e *echo.Echo, usersdb *UserDB, store *sqlitestore.SqliteStore) {
-	gob.Register(&User{})
-
 	s := &server{
 		usersdb: usersdb,
 		store:   store,
@@ -29,6 +26,10 @@ func RegisterHandlers(e *echo.Echo, usersdb *UserDB, store *sqlitestore.SqliteSt
 }
 
 func (s *server) Login(c echo.Context) error {
+	if _, logged := util.IsLoggedIn(s.store, c); logged {
+		return c.Redirect(302, "/")
+	}
+
 	return util.RenderData(c, "login", "Login", nil)
 }
 
@@ -64,6 +65,10 @@ func (s *server) DoLogin(c echo.Context) error {
 }
 
 func (s *server) Register(c echo.Context) error {
+	if _, logged := util.IsLoggedIn(s.store, c); logged {
+		return c.Redirect(302, "/")
+	}
+
 	return util.RenderData(c, "register", "Register", nil)
 }
 
@@ -98,6 +103,10 @@ func (s *server) Logout(c echo.Context) error {
 			util.RenderError(c, err)
 		}
 	}()
+
+	if _, logged := util.IsLoggedIn(s.store, c); !logged {
+		return c.Redirect(302, "/")
+	}
 
 	session, err := s.store.Get(c.Request(), "session")
 	if err != nil {

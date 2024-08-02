@@ -5,6 +5,7 @@ import (
 	"io"
 	"server/todo"
 	"server/user"
+	"server/util"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -51,6 +52,8 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// Template
+	util.InitTypes()
 	t := &Template{
 		templates: template.Must(template.ParseGlob("public/views/*.html")),
 	}

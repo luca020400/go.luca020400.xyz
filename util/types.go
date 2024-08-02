@@ -1,4 +1,9 @@
-package todo
+package util
+
+type User struct {
+	ID   int64
+	Nick string
+}
 
 type Todo struct {
 	UserID    int64

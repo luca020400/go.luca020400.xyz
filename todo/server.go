@@ -3,7 +3,6 @@ package todo
 import (
 	"errors"
 	"net/http"
-	"server/user"
 	"server/util"
 	"strconv"
 
@@ -40,19 +39,15 @@ func (s *server) Todos(c echo.Context) error {
 		}
 	}()
 
-	session, err := s.store.Get(c.Request(), "session")
-	if err != nil {
-		return err
-	}
-	u := session.Values["user"]
-	if u == nil {
+	u, logged := util.IsLoggedIn(s.store, c)
+	if !logged {
 		return c.Redirect(http.StatusFound, "/login")
 	}
 
 	return util.RenderData(c, "main", "Todos", struct {
-		User *user.User
+		User *util.User
 	}{
-		User: session.Values["user"].(*user.User),
+		User: u,
 	})
 }
 
@@ -64,11 +59,10 @@ func (s *server) GetTodos(c echo.Context) error {
 		}
 	}()
 
-	session, err := s.store.Get(c.Request(), "session")
-	if err != nil {
-		return err
+	user, logged := util.IsLoggedIn(s.store, c)
+	if !logged {
+		return c.String(http.StatusUnauthorized, "Unauthorized")
 	}
-	user := session.Values["user"].(*user.User)
 
 	todos, err := s.tododb.GetTodos(user.ID)
 	if err != nil {
@@ -86,11 +80,10 @@ func (s *server) CreateTodo(c echo.Context) error {
 		}
 	}()
 
-	session, err := s.store.Get(c.Request(), "session")
-	if err != nil {
-		return err
+	user, logged := util.IsLoggedIn(s.store, c)
+	if !logged {
+		return c.String(http.StatusUnauthorized, "Unauthorized")
 	}
-	user := session.Values["user"].(*user.User)
 
 	name := c.FormValue("name")
 	todo, err := s.tododb.InsertTodo(user.ID, name)
@@ -109,11 +102,10 @@ func (s *server) DeleteTodo(c echo.Context) error {
 		}
 	}()
 
-	session, err := s.store.Get(c.Request(), "session")
-	if err != nil {
-		return err
+	user, logged := util.IsLoggedIn(s.store, c)
+	if !logged {
+		return c.String(http.StatusUnauthorized, "Unauthorized")
 	}
-	user := session.Values["user"].(*user.User)
 
 	id := c.Param("id")
 	idInt, err := strconv.ParseInt(id, 10, 64)
@@ -141,11 +133,10 @@ func (s *server) CompletedTodo(c echo.Context) error {
 		}
 	}()
 
-	session, err := s.store.Get(c.Request(), "session")
-	if err != nil {
-		return err
+	user, logged := util.IsLoggedIn(s.store, c)
+	if !logged {
+		return c.String(http.StatusUnauthorized, "Unauthorized")
 	}
-	user := session.Values["user"].(*user.User)
 
 	id := c.Param("id")
 	idInt, err := strconv.ParseInt(id, 10, 64)

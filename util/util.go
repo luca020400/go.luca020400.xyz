@@ -4,12 +4,14 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/michaeljs1990/sqlitestore"
 	"golang.org/x/crypto/argon2"
 )
 
@@ -125,4 +127,23 @@ func ComparePasswordAndHash(password, hash string) (bool, error) {
 	otherHash := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, p.parallelism, p.keyLength)
 
 	return subtle.ConstantTimeCompare(hashBytes, otherHash) == 1, nil
+}
+
+func IsLoggedIn(store *sqlitestore.SqliteStore, c echo.Context) (*User, bool) {
+	session, err := store.Get(c.Request(), "session")
+	if err != nil {
+		return nil, false
+	}
+
+	user := session.Values["user"]
+	if user == nil {
+		return nil, false
+	}
+
+	return user.(*User), true
+}
+
+func InitTypes() {
+	gob.Register(&User{})
+	gob.Register(&Todo{})
 }

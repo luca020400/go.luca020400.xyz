@@ -2,6 +2,7 @@ package user
 
 import (
 	"database/sql"
+	"server/util"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -77,16 +78,16 @@ func (udb *UserDB) Close() {
 	udb.deleteUserByIDStmt.Close()
 }
 
-func (udb *UserDB) GetUsers() ([]User, error) {
+func (udb *UserDB) GetUsers() ([]util.User, error) {
 	rows, err := udb.getUsersStmt.Query()
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	users := []User{}
+	users := []util.User{}
 	for rows.Next() {
-		var user User
+		var user util.User
 		if err := rows.Scan(&user.ID, &user.Nick); err != nil {
 			return nil, err
 		}
@@ -96,10 +97,10 @@ func (udb *UserDB) GetUsers() ([]User, error) {
 	return users, nil
 }
 
-func (udb *UserDB) GetUserByNick(nick string) (*User, string, error) {
+func (udb *UserDB) GetUserByNick(nick string) (*util.User, string, error) {
 	row := udb.getUserByNickStmt.QueryRow(nick)
 
-	var user User
+	var user util.User
 	var hash string
 	if err := row.Scan(&user.ID, &user.Nick, &hash); err != nil {
 		return nil, "", err
@@ -108,7 +109,7 @@ func (udb *UserDB) GetUserByNick(nick string) (*User, string, error) {
 	return &user, hash, nil
 }
 
-func (udb *UserDB) InsertUser(nick, hash string) (*User, error) {
+func (udb *UserDB) InsertUser(nick, hash string) (*util.User, error) {
 	res, err := udb.insertUserStmt.Exec(nick, hash)
 	if err != nil {
 		return nil, err
@@ -119,7 +120,7 @@ func (udb *UserDB) InsertUser(nick, hash string) (*User, error) {
 		return nil, err
 	}
 
-	return &User{
+	return &util.User{
 		ID:   id,
 		Nick: nick,
 	}, nil

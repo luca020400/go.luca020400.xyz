@@ -2,6 +2,7 @@ package todo
 
 import (
 	"database/sql"
+	"server/util"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -70,16 +71,16 @@ func (tdb *TodoDB) Close() {
 	tdb.db.Close()
 }
 
-func (tdb *TodoDB) GetTodos(userId int64) ([]Todo, error) {
+func (tdb *TodoDB) GetTodos(userId int64) ([]util.Todo, error) {
 	rows, err := tdb.getTodosStmt.Query(userId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	todos := []Todo{}
+	todos := []util.Todo{}
 	for rows.Next() {
-		var todo Todo
+		var todo util.Todo
 		err := rows.Scan(&todo.UserID, &todo.ID, &todo.Name, &todo.Completed)
 		if err != nil {
 			return nil, err
@@ -91,10 +92,10 @@ func (tdb *TodoDB) GetTodos(userId int64) ([]Todo, error) {
 	return todos, nil
 }
 
-func (tdb *TodoDB) GetTodoByID(userId, id int64) (*Todo, error) {
+func (tdb *TodoDB) GetTodoByID(userId, id int64) (*util.Todo, error) {
 	row := tdb.getTodoByIDStmt.QueryRow(userId, id)
 
-	var todo Todo
+	var todo util.Todo
 	if err := row.Scan(&todo.UserID, &todo.ID, &todo.Name, &todo.Completed); err != nil {
 		return nil, err
 	}
@@ -102,7 +103,7 @@ func (tdb *TodoDB) GetTodoByID(userId, id int64) (*Todo, error) {
 	return &todo, nil
 }
 
-func (tdb *TodoDB) InsertTodo(userId int64, name string) (*Todo, error) {
+func (tdb *TodoDB) InsertTodo(userId int64, name string) (*util.Todo, error) {
 	res, err := tdb.insertTodoStmt.Exec(userId, name, false)
 	if err != nil {
 		return nil, err
@@ -113,7 +114,7 @@ func (tdb *TodoDB) InsertTodo(userId int64, name string) (*Todo, error) {
 		return nil, err
 	}
 
-	return &Todo{
+	return &util.Todo{
 		UserID:    userId,
 		ID:        id,
 		Name:      name,
