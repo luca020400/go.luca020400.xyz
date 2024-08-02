@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"html/template"
 	"io"
 	"net/http"
@@ -30,7 +31,7 @@ func createErrorData(err interface{}) MainData {
 	}
 }
 
-func renderError(c echo.Context, err interface{}) error {
+func renderError(c echo.Context, err error) error {
 	return c.Render(http.StatusInternalServerError, "error", createErrorData(err))
 }
 
@@ -106,7 +107,7 @@ func DeleteTodo(c echo.Context) error {
 	}
 
 	if rows == 0 {
-		return renderError(c, "Todo not found")
+		return renderError(c, errors.New("Todo not found"))
 	}
 
 	return c.NoContent(http.StatusOK)
