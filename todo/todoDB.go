@@ -1,4 +1,4 @@
-package main
+package todo
 
 import (
 	"database/sql"
@@ -101,13 +101,18 @@ func (tdb *TodoDB) GetTodoByID(id int64) (*Todo, error) {
 	return &todo, nil
 }
 
-func (tdb *TodoDB) InsertTodo(todo *Todo) (int64, error) {
+func (tdb *TodoDB) InsertTodo(name string) (*Todo, error) {
+	todo := &Todo{Name: name}
 	res, err := tdb.insertTodoStmt.Exec(todo.Name, todo.Completed)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return res.LastInsertId()
+	if id, err := res.LastInsertId(); err == nil {
+		todo.ID = id
+	}
+
+	return todo, nil
 }
 
 func (tdb *TodoDB) UpdateTodo(todo *Todo) (int64, error) {

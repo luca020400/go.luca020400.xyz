@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"server/todo"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -76,15 +77,11 @@ func CreateTodo(c echo.Context) error {
 	}()
 
 	name := c.FormValue("name")
-	todo := &Todo{
-		Name: name,
-	}
-	id, err := tododb.InsertTodo(todo)
+	todo, err := tododb.InsertTodo(name)
 	if err != nil {
 		return err
 	}
 
-	todo.ID = id
 	return c.Render(http.StatusCreated, "todo", todo)
 }
 
@@ -141,7 +138,7 @@ func CompletedTodo(c echo.Context) error {
 	return c.Render(http.StatusOK, "todo", todo)
 }
 
-var tododb *TodoDB
+var tododb *todo.TodoDB
 var store *sqlitestore.SqliteStore
 
 func main() {
@@ -154,7 +151,7 @@ func main() {
 	defer store.Close()
 
 	// Setup DB
-	if tododb, err = NewTodoDB(); err != nil {
+	if tododb, err = todo.NewTodoDB(); err != nil {
 		panic(err)
 	}
 	defer tododb.Close()
