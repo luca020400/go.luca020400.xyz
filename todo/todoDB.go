@@ -70,16 +70,16 @@ func (tdb *TodoDB) Close() {
 	tdb.db.Close()
 }
 
-func (tdb *TodoDB) GetTodos() ([]*Todo, error) {
+func (tdb *TodoDB) GetTodos() ([]Todo, error) {
 	rows, err := tdb.getTodosStmt.Query()
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	todos := []*Todo{}
+	todos := []Todo{}
 	for rows.Next() {
-		todo := &Todo{}
+		var todo Todo
 		err := rows.Scan(&todo.ID, &todo.Name, &todo.Completed)
 		if err != nil {
 			return nil, err
