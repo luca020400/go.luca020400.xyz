@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"server/todo"
+	"server/user"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -138,6 +139,7 @@ func CompletedTodo(c echo.Context) error {
 	return c.Render(http.StatusOK, "todo", todo)
 }
 
+var usersdb *user.UserDB
 var tododb *todo.TodoDB
 var store *sqlitestore.SqliteStore
 
@@ -150,11 +152,17 @@ func main() {
 	}
 	defer store.Close()
 
-	// Setup DB
+	// Setup data DB
 	if tododb, err = todo.NewTodoDB(); err != nil {
 		panic(err)
 	}
 	defer tododb.Close()
+
+	// Setup user DB
+	if usersdb, err = user.NewUserDB(); err != nil {
+		panic(err)
+	}
+	defer usersdb.Close()
 
 	// Echo instance
 	e := echo.New()
