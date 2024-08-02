@@ -3,6 +3,7 @@ package todo
 import (
 	"errors"
 	"net/http"
+	"server/user"
 	"server/util"
 	"strconv"
 
@@ -32,7 +33,27 @@ func RegisterHandlers(e *echo.Echo, tododb *TodoDB, store *sqlitestore.SqliteSto
 }
 
 func (s *server) Todos(c echo.Context) error {
-	return util.RenderData(c, "main", "Todos", nil)
+	var err error
+	defer func() {
+		if err != nil {
+			util.RenderError(c, err)
+		}
+	}()
+
+	session, err := s.store.Get(c.Request(), "session")
+	if err != nil {
+		return err
+	}
+	u := session.Values["user"]
+	if u == nil {
+		return c.Redirect(http.StatusFound, "/login")
+	}
+
+	return util.RenderData(c, "main", "Todos", struct {
+		User *user.User
+	}{
+		User: session.Values["user"].(*user.User),
+	})
 }
 
 func (s *server) GetTodos(c echo.Context) error {
@@ -43,7 +64,13 @@ func (s *server) GetTodos(c echo.Context) error {
 		}
 	}()
 
-	todos, err := s.tododb.GetTodos()
+	session, err := s.store.Get(c.Request(), "session")
+	if err != nil {
+		return err
+	}
+	user := session.Values["user"].(*user.User)
+
+	todos, err := s.tododb.GetTodos(user.ID)
 	if err != nil {
 		return err
 	}
@@ -59,8 +86,14 @@ func (s *server) CreateTodo(c echo.Context) error {
 		}
 	}()
 
+	session, err := s.store.Get(c.Request(), "session")
+	if err != nil {
+		return err
+	}
+	user := session.Values["user"].(*user.User)
+
 	name := c.FormValue("name")
-	todo, err := s.tododb.InsertTodo(name)
+	todo, err := s.tododb.InsertTodo(user.ID, name)
 	if err != nil {
 		return err
 	}
@@ -76,13 +109,19 @@ func (s *server) DeleteTodo(c echo.Context) error {
 		}
 	}()
 
+	session, err := s.store.Get(c.Request(), "session")
+	if err != nil {
+		return err
+	}
+	user := session.Values["user"].(*user.User)
+
 	id := c.Param("id")
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return err
 	}
 
-	rows, err := s.tododb.DeleteTodoByID(idInt)
+	rows, err := s.tododb.DeleteTodoByID(user.ID, idInt)
 	if err != nil {
 		return err
 	}
@@ -102,19 +141,25 @@ func (s *server) CompletedTodo(c echo.Context) error {
 		}
 	}()
 
+	session, err := s.store.Get(c.Request(), "session")
+	if err != nil {
+		return err
+	}
+	user := session.Values["user"].(*user.User)
+
 	id := c.Param("id")
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return err
 	}
 
-	todo, err := s.tododb.GetTodoByID(idInt)
+	todo, err := s.tododb.GetTodoByID(user.ID, idInt)
 	if err != nil {
 		return err
 	}
 
 	todo.Completed = !todo.Completed
-	if _, err = s.tododb.UpdateTodo(todo); err != nil {
+	if _, err = s.tododb.UpdateTodo(todo.Name, todo.Completed, todo.UserID, todo.ID); err != nil {
 		return err
 	}
 

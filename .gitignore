@@ -2,5 +2,6 @@
 server
 
 # DB
-sessions.db
 data.db
+sessions.db
+user.db

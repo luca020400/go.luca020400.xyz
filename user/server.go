@@ -1,6 +1,7 @@
 package user
 
 import (
+	"encoding/gob"
 	"server/util"
 
 	"github.com/labstack/echo/v4"
@@ -13,6 +14,8 @@ type server struct {
 }
 
 func RegisterHandlers(e *echo.Echo, usersdb *UserDB, store *sqlitestore.SqliteStore) {
+	gob.Register(&User{})
+
 	s := &server{
 		usersdb: usersdb,
 		store:   store,
@@ -49,19 +52,19 @@ func (s *server) DoLogin(c echo.Context) error {
 		return c.String(401, "Unauthorized")
 	}
 
-	session, err := s.store.Get(c.Request(), "session")
+	session, err := s.store.New(c.Request(), "session")
 	if err != nil {
 		return err
 	}
 
-	session.Values["nick"] = user.Nick
+	session.Values["user"] = user
 	session.Save(c.Request(), c.Response())
 
 	return c.Redirect(302, "/")
 }
 
 func (s *server) Register(c echo.Context) error {
-	return c.Render(200, "register", nil)
+	return util.RenderData(c, "register", "Register", nil)
 }
 
 func (s *server) DoRegister(c echo.Context) error {
@@ -80,18 +83,10 @@ func (s *server) DoRegister(c echo.Context) error {
 		return err
 	}
 
-	user, err := s.usersdb.InsertUser(nick, hash)
+	_, err = s.usersdb.InsertUser(nick, hash)
 	if err != nil {
 		return err
 	}
-
-	session, err := s.store.Get(c.Request(), "session")
-	if err != nil {
-		return err
-	}
-
-	session.Values["nick"] = user.Nick
-	session.Save(c.Request(), c.Response())
 
 	return c.Redirect(302, "/login")
 }

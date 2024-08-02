@@ -25,27 +25,27 @@ func NewTodoDB() (*TodoDB, error) {
 		return nil, err
 	}
 
-	getTodosStmt, err := db.Prepare("SELECT id, name, completed FROM todos")
+	getTodosStmt, err := db.Prepare("SELECT user_id, id, name, completed FROM todos WHERE user_id = ?")
 	if err != nil {
 		return nil, err
 	}
 
-	getTodoByIDStmt, err := db.Prepare("SELECT id, name, completed FROM todos WHERE id = ?")
+	getTodoByIDStmt, err := db.Prepare("SELECT user_id, id, name, completed FROM todos WHERE user_id = ? AND id = ?")
 	if err != nil {
 		return nil, err
 	}
 
-	insertTodoStmt, err := db.Prepare("INSERT INTO todos (name, completed) VALUES (?, ?)")
+	insertTodoStmt, err := db.Prepare("INSERT INTO todos (user_id, name, completed) VALUES (?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
 
-	updateTodoStmt, err := db.Prepare("UPDATE todos SET name = ?, completed = ? WHERE id = ?")
+	updateTodoStmt, err := db.Prepare("UPDATE todos SET name = ?, completed = ? WHERE user_id = ? AND id = ?")
 	if err != nil {
 		return nil, err
 	}
 
-	deleteTodoByIDStmt, err := db.Prepare("DELETE FROM todos WHERE id = ?")
+	deleteTodoByIDStmt, err := db.Prepare("DELETE FROM todos WHERE user_id = ? AND id = ?")
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +70,8 @@ func (tdb *TodoDB) Close() {
 	tdb.db.Close()
 }
 
-func (tdb *TodoDB) GetTodos() ([]Todo, error) {
-	rows, err := tdb.getTodosStmt.Query()
+func (tdb *TodoDB) GetTodos(userId int64) ([]Todo, error) {
+	rows, err := tdb.getTodosStmt.Query(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (tdb *TodoDB) GetTodos() ([]Todo, error) {
 	todos := []Todo{}
 	for rows.Next() {
 		var todo Todo
-		err := rows.Scan(&todo.ID, &todo.Name, &todo.Completed)
+		err := rows.Scan(&todo.UserID, &todo.ID, &todo.Name, &todo.Completed)
 		if err != nil {
 			return nil, err
 		}
@@ -91,19 +91,19 @@ func (tdb *TodoDB) GetTodos() ([]Todo, error) {
 	return todos, nil
 }
 
-func (tdb *TodoDB) GetTodoByID(id int64) (*Todo, error) {
-	row := tdb.getTodoByIDStmt.QueryRow(id)
+func (tdb *TodoDB) GetTodoByID(userId, id int64) (*Todo, error) {
+	row := tdb.getTodoByIDStmt.QueryRow(userId, id)
 
 	var todo Todo
-	if err := row.Scan(&todo.ID, &todo.Name, &todo.Completed); err != nil {
+	if err := row.Scan(&todo.UserID, &todo.ID, &todo.Name, &todo.Completed); err != nil {
 		return nil, err
 	}
 
 	return &todo, nil
 }
 
-func (tdb *TodoDB) InsertTodo(name string) (*Todo, error) {
-	res, err := tdb.insertTodoStmt.Exec(name, false)
+func (tdb *TodoDB) InsertTodo(userId int64, name string) (*Todo, error) {
+	res, err := tdb.insertTodoStmt.Exec(userId, name, false)
 	if err != nil {
 		return nil, err
 	}
@@ -114,14 +114,15 @@ func (tdb *TodoDB) InsertTodo(name string) (*Todo, error) {
 	}
 
 	return &Todo{
+		UserID:    userId,
 		ID:        id,
 		Name:      name,
 		Completed: false,
 	}, nil
 }
 
-func (tdb *TodoDB) UpdateTodo(todo *Todo) (int64, error) {
-	res, err := tdb.updateTodoStmt.Exec(todo.Name, todo.Completed, todo.ID)
+func (tdb *TodoDB) UpdateTodo(name string, completed bool, userId, id int64) (int64, error) {
+	res, err := tdb.updateTodoStmt.Exec(name, completed, userId, id)
 	if err != nil {
 		return 0, err
 	}
@@ -129,8 +130,8 @@ func (tdb *TodoDB) UpdateTodo(todo *Todo) (int64, error) {
 	return res.RowsAffected()
 }
 
-func (tdb *TodoDB) DeleteTodoByID(id int64) (int64, error) {
-	res, err := tdb.deleteTodoByIDStmt.Exec(id)
+func (tdb *TodoDB) DeleteTodoByID(userId, id int64) (int64, error) {
+	res, err := tdb.deleteTodoByIDStmt.Exec(userId, id)
 	if err != nil {
 		return 0, err
 	}
@@ -150,9 +151,11 @@ func connect() (*sql.DB, error) {
 func createTodoTable(db *sql.DB) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS todos (
+			user_id INTEGER,
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT,
-			completed BOOLEAN
+			completed BOOLEAN,
+			FOREIGN KEY(user_id) REFERENCES users(id)
 		)
 	`
 
