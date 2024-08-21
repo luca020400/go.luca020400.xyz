@@ -1,10 +1,9 @@
 {{ define "todo" }}
 
 <li id="todo_{{ .ID }}" class="bg-gray-100 p-4 rounded-lg shadow-md mb-4">
-
     <span class="text-lg font-semibold">{{ .Name }}</span>
-    <button hx-delete="/api/todos/{{ .ID }}" hx-target="#todo_{{ .ID }}" hx-swap="outerHTML"
-        class="ml-2 px-4 py-2 bg-red-500 text-white rounded-md">Delete</button>
+
+    <br>
 
     {{ if .Completed}}
     <span class="text-green-500">
@@ -16,8 +15,13 @@
     </span>
     {{ end }}
 
+    <br>
+
     <button hx-put="/api/todos/{{ .ID }}/completed" hx-target="#todo_{{ .ID }}" hx-swap="outerHTML"
-        class="ml-2 px-4 py-2 bg-blue-500 text-white rounded-md">Toggle completed</button>
+        class="px-4 py-2 bg-blue-500 text-white rounded-md">Toggle completed</button>
+
+    <button hx-delete="/api/todos/{{ .ID }}" hx-target="#todo_{{ .ID }}" hx-swap="outerHTML"
+        class="px-4 py-2 bg-red-500 text-white rounded-md">Delete</button>
 
 </li>
 
